@@ -16,4 +16,7 @@ from sklearn.model_selection import cross_val_score
 from sklearn import tree
 from IPython.display import display, HTML
 
-df = pd.
+df = pd.read_csv('tsa_claims.csv')
+
+df.info()
+df.describe()
