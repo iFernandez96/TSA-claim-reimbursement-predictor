@@ -18,6 +18,8 @@ from scipy import stats
 from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import cross_val_score
+from sklearn.pipeline import Pipeline
+
 
 df = pd.read_csv('C:/Users/haide/Documents/Project2/tsa_claims.csv')
 df['Item'].value_counts(normalize = True).cumsum()[:15].plot.bar()
@@ -64,17 +66,23 @@ df['Close Amount'] = pd.to_numeric(df['Close Amount'], errors='coerce')
 stats.zscore(df.groupby("Item")[['Claim Amount', 'Close Amount']].mean()).sort_values(by='Close Amount', ascending = False).plot.barh()
 
 
-#lower_bound = df['Claim Amount'].mean() - 3 * df['Claim Amount'].std()
-#upper_bound = df['Claim Amount'].mean() + 3 * df['Claim Amount'].std()
+lower_bound = df['Claim Amount'].mean() - 3 * df['Claim Amount'].std()
+upper_bound = df['Claim Amount'].mean() + 3 * df['Claim Amount'].std()
 
-#df = df[(df['Claim Amount'] >= lower_bound) & (df['Claim Amount'] <= upper_bound)]
+df = df[(df['Claim Amount'] >= lower_bound) & (df['Claim Amount'] <= upper_bound)]
 
+lower_bound = df['Close Amount'].mean() - 3 * df['Close Amount'].std()
+upper_bound = df['Close Amount'].mean() + 3 * df['Close Amount'].std()
+
+df = df[(df['Close Amount'] >= lower_bound) & (df['Close Amount'] <= upper_bound)]
 
 
 
 print(df.info())
 
 df = pd.get_dummies(df, columns=['Item'], drop_first=True)
+
+#df['Close Amount'] = np.log1p(df['Close Amount'])
 
 predictors = ['Claim Amount'] + list(df.filter(like='Item_').columns)
 target = 'Close Amount'
@@ -99,13 +107,16 @@ mse_baseline = ((mean_target - y_test)**2).mean()
 rmse_baseline = np.sqrt(mse_baseline)
 print(f"Baseline RMSE: {rmse_baseline:.1f}".format())
 
-sns.scatterplot(y_test, y_pred)
-plt.plot(color='grey', linestyle='dashed')
-plt.xlabel('actual')
-plt.ylabel('predicted')
+plt.scatter(y_test, y_pred, alpha=0.6, color='blue', label='Predicted vs Actual')
+plt.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], 'r--', lw=2, label='Perfect Fit')  # Reference line
+plt.title('Predicted vs Actual Values')
+plt.xlabel('Actual Values')
+plt.ylabel('Predicted Values')
+
+plt.hist(y_pred, bins=30)
+plt.title('Distribution of Predicted Values')
+plt.show()
 
 scores = cross_val_score(regr, X, y, cv=5, scoring='neg_root_mean_squared_error')
 print('Cross-Validated RMSE:', -scores.mean())
-
-
 
