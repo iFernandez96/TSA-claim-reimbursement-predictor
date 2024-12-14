@@ -18,8 +18,13 @@ from scipy import stats
 from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import cross_val_score
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.tree import DecisionTreeRegressor
+import graphviz
+from sklearn.tree import export_graphviz
 
-df = pd.read_csv('C:/Users/haide/Documents/Project2/tsa_claims.csv')
+# df = pd.read_csv('C:/Users/haide/Documents/Project2/tsa_claims.csv')
+df = pd.read_csv('tsa_claims.csv')
 df['Item'].value_counts(normalize = True).cumsum()[:15].plot.bar()
 
 
@@ -61,7 +66,7 @@ plt.title('Items Lost or Damaged by TSA')
 
 df['Claim Amount'] = pd.to_numeric(df['Claim Amount'], errors='coerce')
 df['Close Amount'] = pd.to_numeric(df['Close Amount'], errors='coerce')
-stats.zscore(df.groupby("Item")[['Claim Amount', 'Close Amount']].mean()).sort_values(by='Close Amount', ascending = False).plot.barh()
+#stats.zscore(df.groupby("Item")[['Claim Amount', 'Close Amount']].mean()).sort_values(by='Close Amount', ascending = False).plot.barh()
 
 
 #lower_bound = df['Claim Amount'].mean() - 3 * df['Claim Amount'].std()
@@ -88,7 +93,12 @@ X_train = scaler.fit_transform(X_train)
 X_test = scaler.transform(X_test)
 
 regr = LinearRegression()
-regr.fit(X_train, y_train)
+clf = DecisionTreeRegressor(max_depth=2, random_state=0)
+clf.fit(X_train, y_train)
+# regr.fit(X_train, y_train)
+dot_data = export_graphviz(clf, precision=2, feature_names=predictors, proportion=True, class_names=[target], filled=True, rounded=True, special_characters=True)
+graph = graphviz.Source(dot_data)
+graph
 
 y_pred = regr.predict(X_test)
 test_rmse = np.sqrt(((y_pred - y_test)**2).mean())
