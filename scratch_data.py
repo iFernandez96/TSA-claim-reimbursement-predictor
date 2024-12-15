@@ -74,15 +74,19 @@ df['Close Amount'] = pd.to_numeric(df['Close Amount'], errors='coerce')
 
 #df = df[(df['Claim Amount'] >= lower_bound) & (df['Claim Amount'] <= upper_bound)]
 
+df = df[df['Claim Amount'] != 0]
+df['CloseToClaimRatio'] =  (df['Close Amount'] / df['Claim Amount'])
 
-
+df['CloseToClaimRatio'].mean()
+df['CloseToClaimRatio'].max()
+df['CloseToClaimRatio'].min()
 
 print(df.info())
 
 df = pd.get_dummies(df, columns=['Item'], drop_first=True)
 
 predictors = ['Claim Amount'] + list(df.filter(like='Item_').columns)
-target = 'Close Amount'
+target = 'CloseToClaimRatio'
 X = df[predictors].values
 y = df[target].values
 X_train, X_test, y_train, y_test = train_test_split(X, y,
