@@ -121,5 +121,7 @@ plt.ylabel('predicted')
 scores = cross_val_score(regr, X, y, cv=5, scoring='neg_root_mean_squared_error')
 print('Cross-Validated RMSE:', -scores.mean())
 
+MAE = abs(y_pred - y_test).mean()
+print('Mean Absolute Error:', MAE)
 
 
