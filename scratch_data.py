@@ -19,6 +19,7 @@ from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import cross_val_score
 from sklearn.pipeline import Pipeline
+from sklearn.decomposition import PCA
 
 
 df = pd.read_csv('C:/Users/haide/Documents/Project2/tsa_claims.csv')
@@ -95,10 +96,10 @@ scaler = StandardScaler()
 X_train = scaler.fit_transform(X_train)
 X_test = scaler.transform(X_test)
 
-regr = LinearRegression()
-regr.fit(X_train, y_train)
+knn = KNeighborsRegressor()
+knn.fit(X_train, y_train)
 
-y_pred = regr.predict(X_test)
+y_pred = knn.predict(X_test)
 test_rmse = np.sqrt(((y_pred - y_test)**2).mean())
 print('test RMSE: {:.3g}'.format(test_rmse))
 
@@ -107,8 +108,8 @@ mse_baseline = ((mean_target - y_test)**2).mean()
 rmse_baseline = np.sqrt(mse_baseline)
 print(f"Baseline RMSE: {rmse_baseline:.1f}".format())
 
-plt.scatter(y_test, y_pred, alpha=0.6, color='blue', label='Predicted vs Actual')
-plt.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], 'r--', lw=2, label='Perfect Fit')  # Reference line
+
+plt.scatter(y_test, y_pred, alpha=0.6, color='blue')
 plt.title('Predicted vs Actual Values')
 plt.xlabel('Actual Values')
 plt.ylabel('Predicted Values')
@@ -117,6 +118,6 @@ plt.hist(y_pred, bins=30)
 plt.title('Distribution of Predicted Values')
 plt.show()
 
-scores = cross_val_score(regr, X, y, cv=5, scoring='neg_root_mean_squared_error')
+scores = cross_val_score(knn, X, y, cv=5, scoring='neg_root_mean_squared_error')
 print('Cross-Validated RMSE:', -scores.mean())
 
