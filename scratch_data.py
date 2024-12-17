@@ -47,7 +47,7 @@ val1 = df.isna().sum()
 df = df.dropna(subset = ['Close Amount'])
 df = df.dropna(subset = ['Claim Amount'])
 val2 = df.isna().sum()
-df = df.drop('Airline Name', axis=1)
+#df = df.drop('Airline Name', axis=1)
 
 df = df.dropna(subset = ['Item'])
 df['Item'].value_counts()
@@ -69,10 +69,18 @@ df['Close Amount'] = pd.to_numeric(df['Close Amount'], errors='coerce')
 #stats.zscore(df.groupby("Item")[['Claim Amount', 'Close Amount']].mean()).sort_values(by='Close Amount', ascending = False).plot.barh()
 
 
-#lower_bound = df['Claim Amount'].mean() - 3 * df['Claim Amount'].std()
-#upper_bound = df['Claim Amount'].mean() + 3 * df['Claim Amount'].std()
+df['Item'] = df['Item'].replace({
+    'Luggage (all types including footlockers)': 'Luggage',
+    'Clothing - Shoes; belts; accessories; etc.': 'Clothing',
+    'Jewelry - Fine': 'Jewelry',    
+    'Cameras - Digital': 'Cameras',
+    'Computer - Laptop': 'Computer',
+    'Eyeglasses - (including contact lenses)': 'Eyeglasses',
+    'Cosmetics - Perfume; toilet articles; medicines; soaps; etc.': 'Cosmetics'
+})
 
-#df = df[(df['Claim Amount'] >= lower_bound) & (df['Claim Amount'] <= upper_bound)]
+top_05_percent_cutoff = df['Claim Amount'].quantile(0.995)
+df = df[df['Claim Amount'] <= top_05_percent_cutoff]
 
 df = df[df['Claim Amount'] != 0]
 df['CloseToClaimRatio'] =  (df['Close Amount'] / df['Claim Amount'])
@@ -80,12 +88,13 @@ df['CloseToClaimRatio'] =  (df['Close Amount'] / df['Claim Amount'])
 df['CloseToClaimRatio'].mean()
 df['CloseToClaimRatio'].max()
 df['CloseToClaimRatio'].min()
+#add a iloc for finding the max row
 
 print(df.info())
 
 df = pd.get_dummies(df, columns=['Item'], drop_first=True)
 
-predictors = ['Claim Amount'] + list(df.filter(like='Item_').columns)
+predictors = list(df.filter(like='Item_').columns)
 target = 'CloseToClaimRatio'
 X = df[predictors].values
 y = df[target].values
@@ -99,10 +108,9 @@ X_test = scaler.transform(X_test)
 regr = LinearRegression()
 clf = DecisionTreeRegressor(max_depth=2, random_state=0)
 clf.fit(X_train, y_train)
-# regr.fit(X_train, y_train)
+regr.fit(X_train, y_train)
 dot_data = export_graphviz(clf, precision=2, feature_names=predictors, proportion=True, class_names=[target], filled=True, rounded=True, special_characters=True)
 graph = graphviz.Source(dot_data)
-graph
 
 y_pred = regr.predict(X_test)
 test_rmse = np.sqrt(((y_pred - y_test)**2).mean())
