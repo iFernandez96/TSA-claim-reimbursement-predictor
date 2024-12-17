@@ -23,8 +23,8 @@ from sklearn.tree import DecisionTreeRegressor
 import graphviz
 from sklearn.tree import export_graphviz
 
-df = pd.read_csv('C:/Users/haide/Documents/Project2/tsa_claims.csv')
-#df = pd.read_csv('tsa_claims.csv')
+#df = pd.read_csv('C:/Users/haide/Documents/Project2/tsa_claims.csv')
+df = pd.read_csv('tsa_claims.csv')
 df['Item'].value_counts(normalize = True).cumsum()[:15].plot.barh()
 
 
