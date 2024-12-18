@@ -130,10 +130,10 @@ X_train = scaler.fit_transform(X_train)
 X_test = scaler.transform(X_test)
 
 param_grid = {
-    'max_depth': [3, 5, 10, None],
-    'min_samples_split': [2, 5, 10],
-    'min_samples_leaf': [1, 2, 4],
-    'max_features': [None, 'sqrt', 'log2']
+    'max_depth': range(2, 10),
+    'min_samples_split': range(2, 10),
+    'min_samples_leaf': range(2, 10),
+    'max_features': ['sqrt', 'log2']
 }
 
 
