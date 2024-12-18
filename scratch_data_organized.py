@@ -96,25 +96,13 @@ df.groupby("Item")[['Claim Amount', 'Close Amount']].mean().sort_values(by="Clai
 plt.xlabel('Dollar Amounts')
 plt.title('Item Claim and Close amounts sorted by Claim Amounts');
 
-# This will remove outliers from the dataset
-lower_bound = df['Claim Amount'].mean() - 3 * df['Claim Amount'].std()
-upper_bound = df['Claim Amount'].mean() + 3 * df['Claim Amount'].std()
-
-df = df[(df['Claim Amount'] >= lower_bound) & (df['Claim Amount'] <= upper_bound)]
-
-lower_bound = df['Close Amount'].mean() - 3 * df['Close Amount'].std()
-upper_bound = df['Close Amount'].mean() + 3 * df['Close Amount'].std()
-df = df[(df['Close Amount'] >= lower_bound) & (df['Close Amount'] <= upper_bound)]
-
-# Drop Medicines
-df = df.drop(df[df["Item"] == "Medicines"].index)
 
 df.groupby("Item")[['Claim Amount', 'Close Amount']].mean().sort_values(by="Close Amount").head(15).plot.barh()
 plt.xlabel('Dollar Amounts')
 plt.title('Item Claim and Close amounts sorted by Close Amounts');
 
 grouped = df.groupby("Item")[["Claim Amount", "Close Amount"]].mean()
-grouped["Percentage"] = (grouped["Close Amount"] / grouped["Claim Amount"]) * 100
+grouped["Percentage"] = (grouped["Close Amount"] / grouped["Claim Amount"])
 grouped = grouped.sort_values(by="Percentage")
 grouped["Percentage"].tail(15).plot.barh()
 plt.xlabel('Percentage (%)')
@@ -122,9 +110,11 @@ plt.title('Percentage of Close Amount based on Claim Amount by Item');
 
 df = pd.get_dummies(df, columns=['Item'], drop_first=True)
 
+df['CloseToClaimRatio'] =  (df['Close Amount'] / df['Claim Amount'])
+
 # Assign Predictor and Target variables
 predictors = ['Claim Amount'] + list(df.filter(like='Item_').columns)
-target = 'Close Amount'
+target = 'CloseToClaimRatio'
 
 X = df[predictors].values
 y = df[target].values
@@ -134,18 +124,33 @@ scaler = StandardScaler()
 X_train = scaler.fit_transform(X_train)
 X_test = scaler.transform(X_test)
 
-
+param_grid = {
+    'max_depth': [3, 5, 10, None],
+    'min_samples_split': [2, 5, 10],
+    'min_samples_leaf': [1, 2, 4],
+    'max_features': [None, 'sqrt', 'log2']
+}
 
 
 # Train decision tree regressor
 regressor = DecisionTreeRegressor(random_state=42)
 regressor.fit(X_train, y_train)
 
+grid_search = GridSearchCV(
+    estimator=regressor,
+    param_grid=param_grid,
+    cv=10,  # 5-fold cross-validation
+    scoring='neg_mean_squared_error',  # Optimize for Mean Squared Error
+)
+
+# Perform the grid search
+grid_search.fit(X_train, y_train)
+
 # Evaluate the model
 y_pred = regressor.predict(X_test)
 mse = mean_squared_error(y_test, y_pred)
 rmse = np.sqrt(mse)
-print(f"Root Mean Squared Error: {rmse:.2f}")
+print(f"Test Root Mean Squared Error: {rmse:.2f}")
 
 baseline_pred = np.full_like(y_test, y_train.mean())  # Mean prediction baseline
 baseline_rmse = np.sqrt(mean_squared_error(y_test, baseline_pred))
@@ -156,14 +161,14 @@ plt.figure(figsize=(20, 10))
 plot_tree(regressor, feature_names=predictors, filled=True, fontsize=10)
 plt.title("Decision Tree Regressor")
 
-#regr = LinearRegression()
-#regr.fit(X_train, y_train)
+regr = LinearRegression()
+regr.fit(X_train, y_train)
 
-#y_pred = regr.predict(X_test)
-#test_rmse = np.sqrt(((y_pred - y_test)**2).mean())
-#print('test RMSE: {:.3g}'.format(test_rmse))
+y_pred = regr.predict(X_test)
+test_rmse = np.sqrt(mean_squared_error(y_test, y_pred))
+print('test RMSE: {:.3g}'.format(test_rmse))
 
-#mean_target = y_train.mean()
-#mse_baseline = ((mean_target - y_test)**2).mean()
-#rmse_baseline = np.sqrt(mse_baseline)
-#print(f"Baseline RMSE: {rmse_baseline:.1f}".format())
+mean_target = y_train.mean()
+mse_baseline = ((mean_target - y_test)**2).mean()
+rmse_baseline = np.sqrt(mse_baseline)
+print(f"Baseline RMSE: {rmse_baseline:.1f}".format())
