@@ -55,6 +55,11 @@ df = df.dropna(subset = ['Close Amount'])
 df = df.dropna(subset = ['Claim Amount'])
 df = df.dropna(subset = ['Item'])
 
+item_counts = df['Item'].value_counts()
+items_to_keep = item_counts.head(15).index
+df = df[df['Item'].isin(items_to_keep)]
+df = df[df['Item'] != 'Other']
+
 df['Item'].value_counts()
 item_counts = df['Item'].value_counts()
 items_to_keep = item_counts.head(10).index #change to top 10

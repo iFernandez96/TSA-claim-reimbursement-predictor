@@ -54,6 +54,11 @@ df = df.dropna(subset = ['Disposition'])
 df = df.dropna(subset = ['Item'])
 df = df[df['Item'] != 'Other']
 
+item_counts = df['Item'].value_counts()
+items_to_keep = item_counts.head(15).index
+df = df[df['Item'].isin(items_to_keep)]
+df = df[df['Item'] != 'Other']
+
 df['Claim Amount'] = pd.to_numeric(df['Claim Amount'], errors='coerce')
 df['Close Amount'] = pd.to_numeric(df['Close Amount'], errors='coerce')
 
